@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Language Decoder2</string>
+    <string name="decode">DECODE</string>
+    <string name="write_some_text">Write some text</string>
+</resources>
