@@ -8,6 +8,8 @@ import android.widget.TextView
 import android.widget.Toast
 import com.develofer.languagedecoder2.model.API.retrofitService
 import com.develofer.languagedecoder2.databinding.ActivityMainBinding
+import com.develofer.languagedecoder2.model.Detection
+import com.develofer.languagedecoder2.model.DetectionResponse
 import com.develofer.languagedecoder2.model.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,13 +31,53 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initView()
+        initListener()
         getLanguages()
+    }
+
+    private fun initListener() {
+        binding.decodeButton.setOnClickListener {
+            val text = binding.textInput.text.toString()
+            if (text.isNotEmpty()) {
+                getTextLanguage(text)
+            }
+        }
+    }
+
+    private fun getTextLanguage(text: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = retrofitService.getTextLanguage(text)
+            if (result.isSuccessful) {
+                checkResult(result.body())
+            } else {
+                showError()
+            }
+        }
+
+    }
+
+    private fun checkResult(detectionResponse: DetectionResponse?) {
+        if (detectionResponse != null && !detectionResponse.data.detections.isNullOrEmpty()) {
+            val suspiciousLanguages = detectionResponse.data.detections.filter { it.isReliable }
+            if (suspiciousLanguages.isNotEmpty()) {
+
+                val languageCompleteName =
+                    allLanguages.find { it.code == suspiciousLanguages.first().language }
+
+                if (languageCompleteName != null) {
+                    runOnUiThread {
+                        binding.languageResults.text = languageCompleteName.name
+                    }
+                }
+
+            }
+        }
     }
 
     private fun getLanguages() {
         CoroutineScope(Dispatchers.IO).launch {
             val languages: Response<List<Language>> = retrofitService.getLanguages()
-            if (languages.isSuccessful){
+            if (languages.isSuccessful) {
                 allLanguages = languages.body() ?: emptyList()
                 showSuccess()
             } else {
@@ -47,7 +89,8 @@ class MainActivity : AppCompatActivity() {
     private fun showSuccess() {
         runOnUiThread {
             Toast.makeText(this, "Petition success", Toast.LENGTH_SHORT).show()
-        }    }
+        }
+    }
 
     private fun showError() {
         runOnUiThread {
