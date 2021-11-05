@@ -9,6 +9,9 @@ import android.widget.Toast
 import com.develofer.languagedecoder2.model.API.retrofitService
 import com.develofer.languagedecoder2.databinding.ActivityMainBinding
 import com.develofer.languagedecoder2.model.Language
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
@@ -19,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    var languages = emptyList<Language>()
+    var allLanguages = emptyList<Language>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,16 +33,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getLanguages() {
-        val languages: Response<List<Language>> = retrofitService.getLanguages()
-        if (languages.isSuccessful){
-            this.languages = languages.body() ?: emptyList()
-        } else {
-            showError()
+        CoroutineScope(Dispatchers.IO).launch {
+            val languages: Response<List<Language>> = retrofitService.getLanguages()
+            if (languages.isSuccessful){
+                allLanguages = languages.body() ?: emptyList()
+                showSuccess()
+            } else {
+                showError()
+            }
         }
     }
 
+    private fun showSuccess() {
+        runOnUiThread {
+            Toast.makeText(this, "Petition success", Toast.LENGTH_SHORT).show()
+        }    }
+
     private fun showError() {
-        Toast.makeText(this, "Error making service call", Toast.LENGTH_SHORT).show()
+        runOnUiThread {
+            Toast.makeText(this, "Error making service call", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun initView() {
