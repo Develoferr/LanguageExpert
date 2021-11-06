@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">Language Decoder2</string>
+    <string name="app_name">Language Decoder</string>
     <string name="decode">DECODE</string>
     <string name="write_some_text">Write some text</string>
+    <string name="suspicious_language">SUSPICIOUS LANGUAGE</string>
+    <string name="probability">PROBABILITY</string>
 </resources>
