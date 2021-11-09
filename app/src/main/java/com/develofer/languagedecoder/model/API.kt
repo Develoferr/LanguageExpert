@@ -1,6 +1,6 @@
-package com.develofer.languagedecoder2.model
+package com.develofer.languagedecoder.model
 
-import com.develofer.languagedecoder2.ApiService
+import com.develofer.languagedecoder.ApiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

@@ -1,4 +1,4 @@
-package com.develofer.languagedecoder2
+package com.develofer.languagedecoder
 
 import org.junit.Test
 

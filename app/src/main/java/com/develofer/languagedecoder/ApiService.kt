@@ -1,7 +1,7 @@
-package com.develofer.languagedecoder2
+package com.develofer.languagedecoder
 
-import com.develofer.languagedecoder2.model.DetectionResponse
-import com.develofer.languagedecoder2.model.Language
+import com.develofer.languagedecoder.model.DetectionResponse
+import com.develofer.languagedecoder.model.Language
 import retrofit2.Response
 import retrofit2.http.*
 

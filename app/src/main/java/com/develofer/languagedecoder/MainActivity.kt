@@ -1,4 +1,4 @@
-package com.develofer.languagedecoder2
+package com.develofer.languagedecoder
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -6,15 +6,25 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import com.develofer.languagedecoder2.model.API.retrofitService
-import com.develofer.languagedecoder2.databinding.ActivityMainBinding
-import com.develofer.languagedecoder2.model.Detection
-import com.develofer.languagedecoder2.model.DetectionResponse
-import com.develofer.languagedecoder2.model.Language
+import com.develofer.languagedecoder.model.API.retrofitService
+import com.develofer.languagedecoder.databinding.ActivityMainBinding
+import com.develofer.languagedecoder.model.DetectionResponse
+import com.develofer.languagedecoder.model.Language
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Response
+import android.R
+import android.annotation.SuppressLint
+
+import android.graphics.drawable.Drawable
+import android.view.ViewGroup
+
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+
+import com.google.android.material.appbar.AppBarLayout
+import kotlin.math.roundToInt
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,14 +36,16 @@ class MainActivity : AppCompatActivity() {
 
     var allLanguages = emptyList<Language>()
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        initView()
+        setAppBarHeight()
         initListener()
         getLanguages()
     }
+
 
     private fun initListener() {
         binding.decodeButton.setOnClickListener {
@@ -66,7 +78,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (languageCompleteName != null) {
                     runOnUiThread {
-                        binding.languageResults.text = languageCompleteName.name
+                        binding.suspiciousLanguage.text = languageCompleteName.name
                     }
                 }
 
@@ -97,8 +109,28 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Error making service call", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun initView() {
-        binding.decodeButton
+    private fun setAppBarHeight() {
+        val appBarLayout = binding.appbar
+        appBarLayout.layoutParams =
+            CoordinatorLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                getStatusBarHeight() + dpToPx(56)
+            )
     }
+
+    private fun getStatusBarHeight(): Int {
+        var result = 0
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        if (resourceId > 0) {
+            result = resources.getDimensionPixelSize(resourceId)
+        }
+        return result
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        val density = resources
+            .displayMetrics.density
+        return (dp.toFloat() * density).roundToInt()
+    }
+
 }
