@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.develofer.languagedecoder.model.API
+import com.develofer.languagedecoder.repository.API
 import com.develofer.languagedecoder.model.DetectionResponse
 import com.develofer.languagedecoder.model.Language
 import com.develofer.languagedecoder.model.PointedLanguage
@@ -15,6 +15,12 @@ class MainViewModel : ViewModel() {
 
     private var allLanguagesNames = emptyList<Language>()
     private var principalSuspiciousProb: String? = null
+
+    private val _textInputView = MutableLiveData<String>()
+    val textInputView: LiveData<String> get() = _textInputView
+
+    private val _startCleaning = MutableLiveData<Boolean>()
+    val startCleaning: LiveData<Boolean> get() = _startCleaning
 
     private val _textSuspicious = MutableLiveData<String>()
     val textSuspicious: LiveData<String> get() = _textSuspicious
@@ -28,11 +34,12 @@ class MainViewModel : ViewModel() {
     private val _textOtherSuspiciousProb = MutableLiveData<String>()
     val textOtherSuspiciousProb: LiveData<String> get() = _textOtherSuspiciousProb
 
+
     fun getLanguagesNames() {
         viewModelScope.launch {
-            val languages: Response<List<Language>> = API.retrofitService.getLanguages()
-            if (languages.isSuccessful) {
-                allLanguagesNames = languages.body() ?: emptyList()
+            val languageNames: Response<List<Language>> = API.retrofitService.getLanguages()
+            if (languageNames.isSuccessful) {
+                allLanguagesNames = languageNames.body() ?: emptyList()
                 showSuccess()
             } else {
                 showError()
@@ -45,65 +52,75 @@ class MainViewModel : ViewModel() {
             viewModelScope.launch {
                 val result = API.retrofitService.getTextLanguage(text)
                 if (result.isSuccessful) {
-                    checkResult(result.body())
+                    transformResult(result.body())
                 } else {
                     showError()
                 }
                 cleanText()
+                setText(text)
             }
         }
+    }
 
+    private fun setText(text: String) {
+        _textInputView.value = text
     }
 
     private fun cleanText() {
-        //binding.textInput.setText("")
+        _startCleaning.value = true
     }
 
-    private fun checkResult(detectionResponse: DetectionResponse?) {
+    fun resetCleaner() {
+        _startCleaning.value = false
+    }
+
+    private fun transformResult(detectionResponse: DetectionResponse?) {
         if (detectionResponse != null && !detectionResponse.data.detections.isNullOrEmpty()) {
 
             val suspiciousDetection = detectionResponse.data.detections.filter { it.isReliable }
-            val otherSuspiciousDetections =
-                detectionResponse.data.detections.filter { !it.isReliable }
+            val otherSuspicious = detectionResponse.data.detections.filter { !it.isReliable }
 
             if (suspiciousDetection.isNotEmpty()) {
                 val languageCompleteName =
                     allLanguagesNames.find { it.code == suspiciousDetection.first().language }
-                    principalSuspiciousProb = suspiciousDetection.first().confidence.toString()
-                if (languageCompleteName != null) {
+                principalSuspiciousProb = suspiciousDetection.first().confidence.toString()
+                if (languageCompleteName != null && principalSuspiciousProb != null) {
                     _textSuspicious.value = languageCompleteName.name
-                    _textSuspiciousProb.value = principalSuspiciousProb
+                    _textSuspiciousProb.value = principalSuspiciousProb!!
                 }
             }
             val traducedLanguages: MutableList<PointedLanguage>? = null
-            if (otherSuspiciousDetections.isNotEmpty()) {
-                var languages: String? = null
-                var confidences: String? = null
+            if (otherSuspicious.isNotEmpty()) {
+                var otherSuspiciousLanguages: String? = null
+                var otherSuspiciousLanguagesProb: String? = null
 
-                otherSuspiciousDetections.forEachIndexed { i, Detection ->
+                otherSuspicious.forEachIndexed { i, Detection ->
                     val completeName = allLanguagesNames.find { it.code == Detection.language }
                     if (completeName != null) {
                         val pointedLanguage =
                             PointedLanguage(completeName.name, Detection.confidence.toString())
                         traducedLanguages?.add(pointedLanguage)
                         if (i == 0) {
-                            languages = pointedLanguage.language + " \n "
+                            otherSuspiciousLanguages = pointedLanguage.language + " \n \n "
                             if (principalSuspiciousProb != pointedLanguage.probability) {
-                                confidences = pointedLanguage.probability + " \n "
-                            }
+                                otherSuspiciousLanguagesProb = pointedLanguage.probability + " \n \n "
+                            } else { otherSuspiciousLanguagesProb = " \n \n "}
                         } else {
-                            languages += pointedLanguage.language
-                            languages += " \n "
-                            if (principalSuspiciousProb != pointedLanguage.probability) {
-                                confidences += pointedLanguage.probability
-                                confidences += " \n "
+                            otherSuspiciousLanguages += "${pointedLanguage.language} \n \n "
+                            if (principalSuspiciousProb != pointedLanguage.probability
+                                && otherSuspiciousLanguagesProb != null) {
+                                otherSuspiciousLanguagesProb += "${pointedLanguage.probability} \n \n"
                             }
                         }
                     }
                 }
-                _textOtherSuspicious.value = languages
-                _textOtherSuspiciousProb.value = confidences
+                if (!otherSuspiciousLanguages.isNullOrEmpty()) {
+                    _textOtherSuspicious.value = otherSuspiciousLanguages!!
+                }
+                if (!otherSuspiciousLanguagesProb.isNullOrEmpty()) {
+                    _textOtherSuspiciousProb.value = otherSuspiciousLanguagesProb!!
 
+                }
             }
 
         }

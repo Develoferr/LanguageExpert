@@ -1,7 +1,10 @@
-package com.develofer.languagedecoder
+package com.develofer.languagedecoder.domain
 
+import android.app.Activity
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import com.develofer.languagedecoder.databinding.ActivityMainBinding
 
 import androidx.activity.viewModels
@@ -13,6 +16,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel by viewModels<MainViewModel>()
+
     private lateinit var textInput: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,8 +24,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initListener()
         viewModel.getLanguagesNames()
+        initListener()
+        initObservers()
+
+    }
+
+    private fun initObservers() {
 
         viewModel.textSuspicious.observe(this, { suspicious ->
             binding.suspiciousLanguage.text = suspicious
@@ -35,38 +44,35 @@ class MainActivity : AppCompatActivity() {
         viewModel.textOtherSuspiciousProb.observe(this, { otherSuspiciousProb ->
             binding.otherSuspiciousProbabilityText.text = otherSuspiciousProb
         })
+        viewModel.textInputView.observe( this, { textInput ->
+            binding.textInputView.text = textInput
+        })
+
+        viewModel.startCleaning.observe(this, { starter ->
+            if (starter == true) {
+                cleanText()
+            }
+        })
+    }
+
+    private fun cleanText() {
+        binding.textInput.text = null
+        viewModel.resetCleaner()
     }
 
     private fun initListener() {
         binding.decodeButton.setOnClickListener {
             textInput = binding.textInput.text.toString()
             viewModel.getTextLanguage(textInput)
+            hideKeyboard()
         }
     }
 
-
-    /*private fun setAppBarHeight() {
-        val appBarLayout = binding.appbar
-        appBarLayout.layoutParams =
-            CoordinatorLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                getStatusBarHeight() + dpToPx()
-            )
+    private fun hideKeyboard() {
+        val view = currentFocus ?: View(this)
+        val inputMethodManager =
+            getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
-
-    private fun getStatusBarHeight(): Int {
-        var result = 0
-        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-        if (resourceId > 0) {
-            result = resources.getDimensionPixelSize(resourceId)
-        }
-        return result
-    }
-
-    private fun dpToPx(): Int {
-        val density = resources
-            .displayMetrics.density
-        return (56.toFloat() * density).roundToInt()
-    }*/
 
 }

@@ -1,4 +1,4 @@
-package com.develofer.languagedecoder
+package com.develofer.languagedecoder.repository
 
 import com.develofer.languagedecoder.model.DetectionResponse
 import com.develofer.languagedecoder.model.Language
